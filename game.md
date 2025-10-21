@@ -8,62 +8,62 @@
 
 ```mermaid
 flowchart LR
-  subgraph Client[客户端/运营后台]
+  subgraph Client
     UI[Web/APP/WS]
     GM[运营后台]
   end
 
-  subgraph Ingress[API 层]
+  subgraph Ingress
     API[API Gateway]
   end
 
-  subgraph Core[核心域服务]
-    TO[Term Orchestrator\n(期编排单写者)]
-    BET[Bet Service\n(下注/取消/幂等)]
-    CS[Cashout Service\n(自动/手动兑现)]
-    RF[Refund Service\n(退款)]
-    JP[Jackpot Service\n(奖池计算/发放)]
-    PA[Payout Adapter\n(账务适配/Outbox)]
-    PUSH[Push Gateway\n(订阅事件→WS推送)]
+  subgraph Core
+    TO[Term Orchestrator<br/>期编排单写者]
+    BET[Bet Service<br/>下注/取消/幂等]
+    CS[Cashout Service<br/>自动/手动兑现]
+    RF[Refund Service<br/>退款]
+    JP[Jackpot Service<br/>奖池计算/发放]
+    PA[Payout Adapter<br/>账务适配/Outbox]
+    PUSH[Push Gateway<br/>订阅事件→WS推送]
   end
 
-  subgraph Infra[基础设施]
+  subgraph Infra
     MQ[(Kafka/Pulsar)]
     DB[(MySQL/分库分表)]
     REDIS[(Redis/视图缓存)]
     OBS[(S3/日志/审计可选)]
   end
 
-  Client -- REST/WS --> API
+  Client --> API
   API --> BET
   API --> GM
-  GM -- 配置发布 --> TO
+  GM --> TO
 
-  BET -- BetPlaced/Cancelled --> MQ
-  TO  -- TermCreated/StateChanged/Crashed/Closed --> MQ
-  CS  -- BetCashedOut(事件) --> MQ
-  RF  -- BetRefunded(事件) --> MQ
-  JP  -- JackpotAwarded --> MQ
-  PA  -- PayoutSucceeded/Failed --> MQ
+  BET --> MQ
+  TO --> MQ
+  CS --> MQ
+  RF --> MQ
+  JP --> MQ
+  PA --> MQ
 
-  MQ <--> TO
-  MQ <--> CS
-  MQ <--> RF
-  MQ <--> JP
-  MQ <--> PUSH
+  MQ --> TO
+  MQ --> CS
+  MQ --> RF
+  MQ --> JP
+  MQ --> PUSH
 
-  BET <--> DB
-  TO  <--> DB
-  CS  <--> DB
-  RF  <--> DB
-  JP  <--> DB
-  PA  <--> DB
+  BET --> DB
+  TO --> DB
+  CS --> DB
+  RF --> DB
+  JP --> DB
+  PA --> DB
 
   PUSH --> REDIS
   PUSH --> UI
 
-  PA -- Outbox/Worker --> 外部账务[ApiSys]
-  PA <--> DB
+  PA --> 外部账务[ApiSys]
+  PA --> DB
 ```
 
 **要点**
