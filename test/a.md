@@ -1,3 +1,4 @@
+```mermaid
 graph LR
     subgraph Game Layer
         A1[🎮 Game Engine]
@@ -49,3 +50,4 @@ graph LR
     R9 -->|Metrics| C2
     R3 -->|Config Edit| C3
     C3 -->|Push Config Change| R3
+```
