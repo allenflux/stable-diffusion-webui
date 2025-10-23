@@ -1,45 +1,51 @@
-```mermaid
 graph LR
-    subgraph 游戏引擎 / 逻辑层
-        A1[🎮 游戏引擎<br>Crash / Rocket]
-        A2[💰 下单服务<br>Bet Service]
-        A3[⚙️ 结算 / 兑付服务<br>Settlement & Cashout]
+    subgraph Game Layer
+        A1[🎮 Game Engine]
+        A2[💰 Bet Service]
+        A3[⚙️ Cashout/Settlement]
     end
 
-    subgraph Redis 存储层
-        B1[(game:term:state:{cid})]
-        B2[(game:term:push:{cid})]
-        B3[(game:channel:config:{cid})]
-        B4[(game:seed:{game}:{cid}:{tid})]
-        B5[(lock:*)]
-        B6[(stream:cashout:tasks:{cid})]
-        B7[(zset:refund:retry)]
-        B8[(game:global:stats)]
+    subgraph Redis Layer
+        R1[(game:term:state:$channel_id)]
+        R2[(game:term:push:$channel_id)]
+        R3[(game:channel:config:$channel_id)]
+        R4[(game:seed:$game:$channel_id:$term_id)]
+        R5[(lock:*)]
+        R6[(stream:bet:queue:$channel_id)]
+        R7[(stream:cashout:tasks:$channel_id)]
+        R8[(zset:retry / pending)]
+        R9[(game:global:stats)]
     end
 
-    subgraph 消费层
-        C1[🛰️ WebSocket 推送层]
-        C2[📊 监控服务 / 数据统计]
-        C3[👩‍💼 后台面板 / 控制台]
+    subgraph Outer Layer
+        C1[🛰️ WebSocket / Client Push]
+        C2[📊 Monitor / Analytics]
+        C3[🧩 Admin Panel]
     end
 
-    %% Data Flows
-    A1 -->|写入/更新状态| B1
-    A1 -->|生成推送数据| B2
-    A1 -->|读取配置| B3
-    A1 -->|生成随机种子| B4
-    A1 -->|申请状态锁| B5
-    A3 -->|任务写入| B6
-    A3 -->|失败重试| B7
-    A1 -->|更新全局统计| B8
+    %% Game Engine
+    A1 -->|Write / Update| R1
+    A1 -->|Push Data| R2
+    A1 -->|Read Config| R3
+    A1 -->|Generate Seed| R4
+    A1 -->|Update Stats| R9
 
-    %% Consumers
-    B2 -->|订阅推送| C1
-    B8 -->|汇总指标| C2
-    B3 -->|配置修改| C3
-    C3 -->|热更新配置| B3
+    %% Bet Service
+    A2 -->|Read State| R1
+    A2 -->|Read Config| R3
+    A2 -->|Set Lock| R5
+    A2 -->|Push Bet Task| R6
+    A2 -->|Update Stats| R9
+    A2 -->|Trigger Push Refresh| R2
 
-    %% Monitoring
-    B5 -->|锁状态检查| C2
-    B6 -->|任务消费| C2
-```
+    %% Settlement
+    A3 -->|Consume Task| R7
+    A3 -->|Write Retry Queue| R8
+    A3 -->|Lock Cashout| R5
+    A3 -->|Update Stats| R9
+
+    %% Outer
+    R2 -->|Realtime View| C1
+    R9 -->|Metrics| C2
+    R3 -->|Config Edit| C3
+    C3 -->|Push Config Change| R3
