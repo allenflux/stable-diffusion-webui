@@ -1,3 +1,4 @@
+```mermaid
 graph LR
     subgraph 游戏引擎 / 逻辑层
         A1[🎮 游戏引擎<br>Crash / Rocket]
@@ -41,3 +42,4 @@ graph LR
     %% Monitoring
     B5 -->|锁状态检查| C2
     B6 -->|任务消费| C2
+```
